@@ -19,16 +19,47 @@ export const FeedbackProvider = ({ children }) => {
 	//Fetch Feedback
 
 	const fetchFeedback = async () => {
-		const response = await fetch(`/feedback?_sort=id&_order=desc`)
-		const data = await response.json()
+		// const response = await fetch(`/feedback.json`)
+		// const data = await response.json()
 
-		setFeedback(data)
-		setIsLoading(false)
+		// const feedbackArr = []
+
+		// for (const key in data) {
+		// 	const feedbackItem = {
+		// 		id: key,
+		// 		...data[key],
+		// 	}
+
+		// 	feedbackArr.push(feedbackItem)
+		// }
+		// setFeedback(feedbackArr)
+		// setIsLoading(false)
+
+		fetch('/feedback.json')
+			.then((response) => {
+				return response.json()
+			})
+			.then((data) => {
+				const feedbackArr = []
+
+				for (const key in data) {
+					const item = {
+						id: key,
+						...data[key],
+					}
+
+					feedbackArr.push(item)
+				}
+				setIsLoading(false)
+				setFeedback(feedbackArr)
+				console.log(feedbackArr)
+			})
 	}
 
 	//Add Feedback
 	const addFeedback = async (newFeedback) => {
-		const response = await fetch(`/feedback`, {
+		// newFeedback.id = uuidv4()
+		const response = await fetch(`/feedback.json`, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -37,7 +68,7 @@ export const FeedbackProvider = ({ children }) => {
 		})
 
 		const data = await response.json()
-		// newFeedback.id = uuidv4()
+
 		setFeedback([data, ...feedback])
 	}
 	//Delete Feedback
