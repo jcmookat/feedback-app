@@ -1,17 +1,27 @@
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useState, useRef } from 'react'
 import FeedbackContext from '../context/FeedbackContext'
 import RatingItem from './RatingItem'
 
 function RatingSelect({ select }) {
 	const [selected, setSelected] = useState(10)
 
-	const { feedbackEdit } = useContext(FeedbackContext)
-
+	const { feedbackEdit, addFeedback } = useContext(FeedbackContext)
+	const isMounted = useRef(true)
 	useEffect(() => {
-		if (feedbackEdit.edit === true) {
-			setSelected(feedbackEdit.item.rating)
+		if (isMounted) {
+			if (feedbackEdit.edit === true) {
+				setSelected(feedbackEdit.item.data.rating)
+			} else {
+				setSelected(10)
+			}
+			if (addFeedback) {
+				setSelected(10)
+			}
 		}
-	}, [feedbackEdit])
+		return () => {
+			isMounted.current = false
+		}
+	}, [feedbackEdit, isMounted, addFeedback])
 
 	const handleChange = (e) => {
 		setSelected(+e.currentTarget.value)
@@ -31,20 +41,7 @@ function RatingSelect({ select }) {
 	}
 	return (
 		<div>
-			<ul className='rating'>
-				{ratings}
-				{/* <li>
-					<input
-						type='radio'
-						id='num1'
-						name='rating'
-						value='1'
-						onChange={handleChange}
-						checked={selected === 1}
-					/>
-					<label htmlFor='num1'>1</label>
-				</li> */}
-			</ul>
+			<ul className='rating'>{ratings}</ul>
 		</div>
 	)
 }

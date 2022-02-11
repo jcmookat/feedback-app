@@ -162,6 +162,16 @@ input:focus {
 .btn-secondary {
 	background: #ff6a95;
 }
+.pink {
+	color: #ff6a95 !important;
+}
+.showPassword {
+	background: #ff6a95;
+	font-size: 80%;
+	color: #fff;
+	border-radius: 5px;
+	padding: 0 15px;
+}
 
 .btn:hover {
 	transform: scale(0.98);
@@ -208,7 +218,9 @@ input:focus {
 .about p {
 	margin: 10px 0;
 }
-
+.border-none {
+	border: none !important;
+}
 @media (max-width: 600px) {
 	.rating li {
 		margin: 10px 3px;

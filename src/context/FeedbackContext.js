@@ -1,6 +1,16 @@
 import { createContext, useEffect, useState } from 'react'
-// import { v4 as uuidv4 } from 'uuid'
-// import FeedbackData from '../data/FeedbackData'
+import {
+	collection,
+	getDocs,
+	query,
+	orderBy,
+	doc,
+	addDoc,
+	deleteDoc,
+	serverTimestamp,
+	updateDoc,
+} from 'firebase/firestore'
+import { db } from '../firebase.config'
 
 const FeedbackContext = createContext()
 
@@ -17,82 +27,80 @@ export const FeedbackProvider = ({ children }) => {
 	}, [])
 
 	//Fetch Feedback
-
 	const fetchFeedback = async () => {
-		// const response = await fetch(`/feedback.json`)
-		// const data = await response.json()
+		try {
+			//Get reference to the collection, not the document
+			const feedbackRef = collection(db, 'feedbackItems')
 
-		// const feedbackArr = []
+			//Create query
+			const q = query(feedbackRef, orderBy('timestamp', 'desc'))
 
-		// for (const key in data) {
-		// 	const feedbackItem = {
-		// 		id: key,
-		// 		...data[key],
-		// 	}
+			//Execute query
+			const querySnap = await getDocs(q)
 
-		// 	feedbackArr.push(feedbackItem)
-		// }
-		// setFeedback(feedbackArr)
-		// setIsLoading(false)
+			const feedback = []
 
-		fetch('/feedback.json')
-			.then((response) => {
-				return response.json()
+			querySnap.forEach((doc) => {
+				return feedback.push({
+					id: doc.id,
+					data: doc.data(),
+				})
 			})
-			.then((data) => {
-				const feedbackArr = []
-
-				for (const key in data) {
-					const item = {
-						id: key,
-						...data[key],
-					}
-
-					feedbackArr.push(item)
-				}
-				setIsLoading(false)
-				setFeedback(feedbackArr)
-				console.log(feedbackArr)
-			})
+			setFeedback(feedback)
+			setIsLoading(false)
+		} catch (error) {
+			console.log('Could not fetch feedback')
+		}
 	}
 
 	//Add Feedback
 	const addFeedback = async (newFeedback) => {
-		// newFeedback.id = uuidv4()
-		const response = await fetch(`/feedback.json`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify(newFeedback),
-		})
+		try {
+			const docRef = await addDoc(collection(db, 'feedbackItems'), {
+				rating: newFeedback.rating,
+				text: newFeedback.text,
+				timestamp: serverTimestamp(),
+			})
 
-		const data = await response.json()
-
-		setFeedback([data, ...feedback])
+			setFeedback([
+				{
+					id: docRef.id,
+					data: { rating: newFeedback.rating, text: newFeedback.text },
+				},
+				...feedback,
+			])
+		} catch (error) {
+			console.log('Could not add feedback')
+		}
+		return true
 	}
+
 	//Delete Feedback
 	const deleteFeedback = async (id) => {
 		if (window.confirm('Are you sure you want to delete?')) {
-			await fetch(`/feedback/${id}`, { method: 'DELETE' })
-			setFeedback(feedback.filter((item) => item.id !== id))
+			await deleteDoc(doc(db, 'feedbackItems', id))
+			const updatedFeedback = feedback.filter((feedback) => feedback.id !== id)
+			setFeedback(updatedFeedback)
 		}
 	}
+
 	// Update Feedback Item
 	const updateFeedback = async (id, updItem) => {
-		const response = await fetch(`/feedback/${id}`, {
-			method: 'PUT',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify(updItem),
-		})
+		const newFeedback = {
+			rating: updItem.rating,
+			text: updItem.text,
+		}
 
-		const data = await response.json()
+		//Update Listing
+		const docRef = doc(db, 'feedbackItems', id)
+		await updateDoc(docRef, newFeedback)
 
 		setFeedback(
-			feedback.map((item) => (item.id === id ? { ...item, ...data } : item)),
+			feedback.map((item) =>
+				item.id === id ? { ...item, id, data: { ...newFeedback } } : item,
+			),
 		)
+
 		setFeedbackEdit({
 			item: {},
 			edit: false,
